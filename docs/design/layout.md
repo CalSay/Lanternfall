@@ -61,7 +61,7 @@ would leave a 448 px stage at 768 wide, narrower than the strip. Phones (under 7
 2. **Game view.** One line under the header holds Fight / Gather (left) and the **Next Up chip** (right): the top goal in
    full, on as many lines as it takes, with "Ready" or a percent and "+N" for the other goals (orange when more than one is
    ready). Tap the chip for the full list in a sheet; each row has a Go button. The stage box fills the rest (`flex: 1`, at
-   least 180 px). While gathering, the away chip ("Leave now: ...") shows as a slim line under that row. Switch is in the pill.
+   least 180 px). While gathering, the away chip ("Leave now: ...") shows as a slim line under that row. Go to is in the pill.
 3. **Tab bar, 54 px, at the bottom.**
 
 Tapping a tab opens its **menu** over the game view (same grid cell, so the header and the tab bar stay):
@@ -78,7 +78,7 @@ Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
 
 ```
 +------+----------------------------------------------+-------------+
-| port | gold  [Fight|Gather] [Switch] [< Zone 14 >]              bell|  top row 44 (48 on screens 600+ tall)
+| port | gold  [Fight|Gather] [Go to] [< Zone 14 >]               bell|  top row 44 (48 on screens 600+ tall)
 |------+----------------------------------------------+-------------|
 | Fight|                                              | Next Up     |
 | Hero |  the stage; combat info in its sky:          | notices     |
@@ -89,8 +89,8 @@ Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
 
 - **Rail** (52 px; 64 on tall screens): the portrait and level on top, then the five tabs (54 px each, 62 tall).
   On a phone the left thumb navigates and the right thumb fights; the bottom edge stays free, so the stage gets the full height.
-- **Top row**: everything not combat: gold and embers, Fight / Gather, Switch, the zone arrows, the bell. The XP
-  bar is its 3 px bottom line. The activity pill is hidden (Switch does the same).
+- **Top row**: everything not combat: gold and embers, Fight / Gather, Go to, the zone arrows, the bell. The XP
+  bar is its 3 px bottom line. The activity pill is hidden (Go to does the same).
 - **Stage**: everything between. Whole-pixel zoom only (62-stage `LAND_ZOOMS`): the largest of x1-x4 that
   leaves at least 360 x 280 logical px, so the heroes keep their ~96 art px: x1 on phones, x2 at 1280 x 720 and
   1024 x 768, x3 at 1920 x 1080. The sky carries the combat info: the place on the left, the foe's plate (name,
@@ -110,7 +110,7 @@ panel between the stage's left strip and the side column: width `min(560px, max(
   foes' side is what the panel covers; the turn fight waits for your input as usual.
 - A true split (stage shrunk beside a menu) would re-lay out and re-zoom the stage on every open and close, and
   at 740 px it leaves neither a readable stage nor a 300 px menu.
-- The top row stays too: gold is in view while you spend it, and Fight / Gather / Switch work from any menu.
+- The top row stays too: gold is in view while you spend it, and Fight / Gather / Go to work from any menu.
 
 The panel slides in from the right (0.2 s; none under reduced motion). Its head is one row: the view switcher
 and a close button (a right chevron); with one view, the title shows instead. It closes with that button, the lit

@@ -309,15 +309,16 @@ function craftReady() {
     if (!ONBOARD.hold) return;
     const h = heldIds(); if (!h.length) return;
     if (!holdOn()) { for (const id of h) showHeld(id); return; }   // switched off: all of them now, as before
-    if (holdReady()) showHeld(h[0]);
+    const own = h.find(id => { try { return FEATURE_OF[id].now && FEATURE_OF[id].now(); } catch (e) { return false; } });   // a drop opened it since
+    if (own) showHeld(own); else if (holdReady()) showHeld(h[0]);
   };
   // the player opened a held row's place: it shows at once
   onboardReveal = id => showHeld(id) || unlock(id, true);
   onboardUnlockAll = () => {
     if (O().all) return;
     O().all = true;
-    for (const f of FEATURES) delete O().done['hold:' + f.id];
     emit('unlock', { id: '*', tab: null, view: null, quiet: true });
+    for (const id of heldIds()) showHeld(id);   // a held row still gets its notice
   };
   // Check every rule now; returns the ids that unlocked. The tick hook calls it about once a second.
   onboardCheck = () => {

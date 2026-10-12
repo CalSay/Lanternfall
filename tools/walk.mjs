@@ -605,7 +605,7 @@ async function nuGatherStep(o) {
 const GEAR_Q = `(() => {
   const POS = ['weapon', 'off', 'helm', 'body'], zt = Math.min(5, zoneTier(S.maxZone)), who = heroWho(), worn = equippedIds();
   const kindsFor = pos => { const row = CRAFT_FITS[pos] || {}, own = who !== 'any' ? row[who] || [] : []; return (own.length ? own : row.any || []).filter(k => !CRAFT_KINDS[k].legacy && craftKindVisible(k) && fits(k, pos, 'hero')); };
-  const viewOpen = k => k === 'ess' ? false : k === 'hide' ? huntingOn() && isUnlocked('forage') && navSkillOpen('hunt') : k === 'fibre' || k === 'herb' ? isUnlocked('forage') : true;   // Essence comes from fights; Foraging and Hunting open later
+  const viewOpen = k => k === 'ess' ? false : k === 'hide' ? huntingOn() && onboardShown('forage') && navSkillOpen('hunt') : k === 'fibre' || k === 'herb' ? onboardShown('forage') : true;   // Essence comes from fights; Foraging and Hunting open later
   const wear = [];
   for (const pos of Object.keys(S.equip)) {
     const cur = equipped(pos); let best = null;
@@ -798,7 +798,7 @@ const GATE_Q = `(() => { const b = craftGoalNext(); if (!b || !b.gate) return nu
   return { key: g.skill + ':' + g.need, skill: g.skill, txt: SKILL[g.skill] + ' ' + g.lv + ' of ' + g.need, lv: S.skills[g.skill].lv, need: g.need, st: g.station || '', mat: g.mat || '', nm: kindName(b.kind, b.t),
     act: S.activity, node: S.node ? { kind: S.node.kind, t: S.node.t } : null }; })()`;
 // a station gate: the cheapest tier 1 piece there the bot can pay for, else the missing material of the cheapest one it can gather for
-const GATE_ST_Q = st => `(() => { const t = 1, can = k => k !== 'ess' && !!CRAFT_NODES[k] && craftNodeVisible(k, t) && (k !== 'fibre' && k !== 'herb' || isUnlocked('forage'));
+const GATE_ST_Q = st => `(() => { const t = 1, can = k => k !== 'ess' && !!CRAFT_NODES[k] && craftNodeVisible(k, t) && (k !== 'fibre' && k !== 'herb' || onboardShown('forage'));
   const all = Object.keys(CRAFT_KINDS).filter(k => CRAFT_KINDS[k].st === ${JSON.stringify(st)} && !CRAFT_KINDS[k].legacy && craftKindVisible(k))
     .map(k => ({ k, c: canCraft(k, t), n: Object.values(craftRecipe(k, t)).reduce((a, n) => a + n, 0) + (CRAFT_KINDS[k].pos && fits(k, CRAFT_KINDS[k].pos, 'hero') ? 0 : 1e6) })).filter(x => x.c.cost && !x.c.unbuilt).sort((a, b) => a.n - b.n);   // a piece the hero wears first (the For you list)
   const ok = all.find(x => x.c.ok); if (ok) return { craft: ok.k, nm: kindName(ok.k, t) };
@@ -1185,11 +1185,13 @@ function scorecard(reached) {
   const unAll = log.filter(e => e.kind === 'unlock' && !rides.includes(e)), un = unAll.filter(e => !e.byAct).map(e => e.t), unEvery = unAll.map(e => e.t);
   const win = (list, len, from, to) => { let best = 0, at = 0; for (const t of list.filter(t => t >= from && t < to)) { const n = list.filter(u => u >= t && u < t + len).length; if (n > best) { best = n; at = t; } } return { best, at }; };
   const w3 = win(un, 180, 0, 1800), w10 = win(un, 600, 1800, 3600), w3All = win(unEvery, 180, 0, 1800);
-  // unlocks-wait-for-the-gap: the same rows by the time they showed (a row held for a clear stage shows later; one never shown is left out)
-  const shownT = unAll.filter(e => !e.byAct).map(e => st.shownAt[e.text] ?? (/^join:/.test(e.text) ? e.t : null)).filter(t => t !== null).sort((a, b) => a - b);
-  const s3 = win(shownT, 180, 0, 1800), s10 = win(shownT, 600, 1800, 3600), wait = Math.max(0, ...unAll.filter(e => st.shownAt[e.text] !== undefined).map(e => st.shownAt[e.text] - e.t));
-  sc.F4 = { value: `${unAll.length} new things (${un.length} released, ${unAll.length - un.length} by player or drop${rides.length ? ', ' + rides.length + ' with a hero join, not counted' : ''}); most released in 3 min (first 30): ${w3.best}${w3.best ? ' from ' + fmtT(w3.at) : ''}; most released in 10 min after: ${w10.best}; all kinds in 3 min: ${w3All.best}; most shown in 3 min (first 30): ${s3.best}${s3.best ? ' from ' + fmtT(s3.at) : ''}; most shown in 10 min after: ${s10.best}; longest wait for a clear stage ${Math.round(wait)}s`,
-    pass: w3.best <= 2 && w10.best <= 4 && s3.best <= 2 && s10.best <= 4, target: 'at most 2 new things the game releases on its own in any 3 min of the first 30, 4 in any 10 after, counted when released and when shown (a thing the player\'s act or a drop opened is listed, not counted)' };
+  // unlocks-wait-for-the-gap: the same rows by the time they showed (a row held for a clear stage shows later). A row not shown by the
+  // end waits until then; one released 5 min before the end and still hidden misses F4.
+  const hidden = unAll.filter(e => !/^join:/.test(e.text) && st.shownAt[e.text] === undefined), stuck = hidden.filter(e => reached - e.t > 300);
+  const shownT = unAll.filter(e => !e.byAct && st.shownAt[e.text] !== undefined || /^join:/.test(e.text)).map(e => st.shownAt[e.text] ?? e.t).sort((a, b) => a - b);
+  const s3 = win(shownT, 180, 0, 1800), s10 = win(shownT, 600, 1800, 3600), wait = Math.max(0, ...unAll.filter(e => !/^join:/.test(e.text)).map(e => (st.shownAt[e.text] ?? reached) - e.t));
+  sc.F4 = { value: `${unAll.length} new things (${un.length} released, ${unAll.length - un.length} by player or drop${rides.length ? ', ' + rides.length + ' with a hero join, not counted' : ''}); most released in 3 min (first 30): ${w3.best}${w3.best ? ' from ' + fmtT(w3.at) : ''}; most released in 10 min after: ${w10.best}; all kinds in 3 min: ${w3All.best}; most shown in 3 min (first 30): ${s3.best}${s3.best ? ' from ' + fmtT(s3.at) : ''}; most shown in 10 min after: ${s10.best}; longest wait for a clear stage ${Math.round(wait)}s${hidden.length ? '; not shown by the end: ' + hidden.map(e => e.text).join(', ') : ''}`,
+    pass: w3.best <= 2 && w10.best <= 4 && s3.best <= 2 && s10.best <= 4 && !stuck.length, target: 'at most 2 new things the game releases on its own in any 3 min of the first 30, 4 in any 10 after, counted when released and when shown (a thing the player\'s act or a drop opened is listed, not counted)' };
   const lay = [...checks.values()].filter(c => c.check === 'layout' || c.check === 'tipphase' || c.check === 'covered' || c.check === 'guide');
   sc.F5 = { value: lay.length + ' finding' + (lay.length === 1 ? '' : 's') + ' at ' + SIZE.w + 'x' + SIZE.h, pass: lay.length === 0, target: 'no tip off its phase, nothing covering the fighters or bars, no clipped text' };
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it

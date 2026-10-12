@@ -3082,6 +3082,23 @@ if (section('unlocks wait for the gap (unlocks-wait-for-the-gap)')) try {
     assert(h2.length && E(`ONBOARD.hold = false; const r = onboardShown(${JSON.stringify(h2[0])}); ONBOARD.hold = true; r`), `${at}: with the hold off (the Node tools) a held row reads as shown (${h2})`);
     assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
+  { // a held row a drop opens later shows at once; "Show every tab" shows the rest, each with its notice
+    const [g, E, ev] = mk(1);
+    E('S.maxZone = 2; onboardCheck(); S.onboard.got.nextup = S.onboard.got.awaynote = S.onboard.got.almanac = Math.round(S.onboard.t); S.onboard.t += 721; onboardCheck(); true');
+    const h = E('JSON.stringify(FEATURES.filter(f => S.onboard.done["hold:" + f.id]).map(f => f.id))');
+    E('S.found = Object.assign(S.found || {}, { "moss-crown": 1 }); tick(0.05); true');
+    const u = E('JSON.stringify([isUnlocked("uniques"), onboardShown("uniques"), liveFoe()])');
+    assert(/uniques/.test(h) && u === '[true,true,true]' && ev.includes('uniques shown'), `${at}: Uniques, held from the 12-minute clock, shows at once mid-fight when a unique drops (${h} ${u} ${JSON.stringify(ev)})`);
+    E('onboardUnlockAll(); true');
+    const left = E('JSON.stringify(FEATURES.filter(f => S.onboard.done["hold:" + f.id]).map(f => f.id))');
+    assert(left === '[]' && JSON.parse(h).filter(id => id !== 'uniques').every(id => ev.includes(id + ' shown')), `${at}: Show every tab shows each held row with its notice (${h} -> ${left}; ${JSON.stringify(ev)})`);
+    assert(!g.errors.length, `${at}: no errors (drops, show all)` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { // the Node tools never hold: a release mid-fight leaves no mark
+    const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s);
+    E('soloPick("tobin"); S.onboard.got.party = 0; S.onboard.t = 300; setActivity("fight"); for (let i = 0; i < 50 && !liveFoe(); i++) tick(0.1); S.maxZone = 2; onboardCheck(); true');
+    assert(E('ONBOARD.hold === false && liveFoe() && onboardShown("gather") && !Object.keys(S.onboard.done).some(k => k.startsWith("hold:"))'), `${at}: in the Node tools the hold is off: Gather released mid-fight shows and leaves no mark`);
+  }
   { // holdForStage 0: today's rule, a released row shows at once
     const [g, E, ev] = mk(0);
     E('S.maxZone = 2; onboardCheck(); true');
