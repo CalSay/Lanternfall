@@ -168,17 +168,32 @@ const rnd = () => { botSeed = (botSeed + 0x6D2B79F5) | 0; let t = Math.imul(botS
 const log = [];                  // { t, kind, text, shot, extra }
 let gt = 0;                      // game seconds since the page opened
 let firstTapAt = null;
-let shotN = 0, shotsLeft = 90;
+// walk-shots-span-session: the 90 shots cover the whole walk, not its first 7 minutes. Key shots (a progress moment, a moment card,
+// the opening's stills, a new tab, a finding) always get one while any are left. Routine shots (tips, Next Up, gear, other cards) are
+// spread over the walk: a few up front, then an allowance that grows with game time (front-loaded, the first minutes matter most),
+// and they never eat the share held back for the key shots still to come. Two notes on the same screen (within 0.5 s) share a shot.
+const SHOT_BUDGET = 90, SHOT_KEY_EST = 40, SHOT_BURST = 6;
+let shotN = 0, shotsLeft = SHOT_BUDGET, routineShots = 0, lastShot = null;
+const shotLog = [];              // { t, f, key }
 const fmtT = t => { const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); };
-async function shot(page, tag) {
+async function shot(page, tag, key) {
+  if (lastShot && gt - lastShot.t <= 0.5) return lastShot.f;
   if (shotsLeft <= 0) return '';
+  if (!key) {
+    const frac = Math.min(1, gt / (MINUTES * 60));
+    const reserve = Math.ceil(SHOT_KEY_EST * (1 - frac)), allow = SHOT_BURST + (SHOT_BUDGET - SHOT_KEY_EST - SHOT_BURST) * Math.sqrt(frac);
+    if (routineShots >= allow || shotsLeft <= reserve) return '';
+    routineShots++;
+  }
   shotsLeft--;
   const f = `${String(++shotN).padStart(2, '0')}-${tag.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)}-${fmtT(gt).replace(':', 'm')}.png`;
-  try { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, f) }); return f; } catch (e) { return ''; }
+  try { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, f) }); } catch (e) { return ''; }
+  lastShot = { t: gt, f }; shotLog.push({ t: Math.round(gt * 10) / 10, f, key: !!key });
+  return f;
 }
 async function note(page, kind, text, o = {}) {
   const e = { ...o.extra, t: Math.round(gt * 10) / 10, kind, text };   // the extras never overwrite the time or kind (a gather note once logged its tier as its time)
-  if (o.shot !== false) e.shot = await shot(page, o.tag || kind + '-' + text);
+  if (o.shot !== false) e.shot = await shot(page, o.tag || kind + '-' + text, o.key);
   log.push(e);
   if (!QUIET && o.say !== false) process.stderr.write(`  ${fmtT(gt).padStart(5)} ${kind.padEnd(8)} ${text.slice(0, 100)}\n`);
   return e;
@@ -413,7 +428,7 @@ async function dismissCards(o) {
     let r = seen.get(sig);
     if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; st.beatenAt.push({ t: gt, zone: bz }); if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
     // a moment card or banner that came up while the bot was busy (a Next Up press, a menu) is dated from when the game showed it
-    if (!r) { r = { first: c.age >= 0 && c.age < 10 ? Math.round((gt - c.age) * 10) / 10 : gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave, scene: c.scene || undefined }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls, scene: c.scene || undefined }, tag: 'card-' + c.cls }); }
+    if (!r) { r = { first: c.age >= 0 && c.age < 10 ? Math.round((gt - c.age) * 10) / 10 : gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave, scene: c.scene || undefined }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls, scene: c.scene || undefined }, tag: 'card-' + c.cls, key: c.cls === 'mm-ov' }); }
     if (r.done && r.back === undefined && gt - r.first <= 8) r.back = gt;   // first-hour-walk-findings: back on screen after a cover (the turn banner hides the notices slot)
     r.last = gt;
   }
@@ -884,7 +899,7 @@ async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
   for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'grade') { st.grades[k] = (st.grades[k] || 0) + 1; continue; } if (kind === 'wipe') { st.wipes.push(Object.assign({ t: gt }, k)); if (!k.boss && !k.arena) st.normalLosses.push({ t: gt, zone: k.zone }); continue; } if (kind === 'upgraded') { st.cover.ups.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'refine') { st.cover.orders.push({ t: gt, prod: k }); continue; } if (kind === 'choice') { choices.push({ t: gt, k, real: k !== 'nextup' || st.nuReady >= 2 }); if (k === 'nextup') st.nuReady = 0; } else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
-  for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
+  for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t, key: true }); }
   const s = o.s, p = st.prev;
   // walk-f3-in-fights: where each stretch of game time went, so a long gap between progress moments can name its stall. Gathering is
   // the Gather view working (a goal's materials, the bot's tier gates); held is a card, sheet or menu up while not gathering (the fight
@@ -926,7 +941,7 @@ const PROGRESS = new Set(['zone', 'ability', 'star', 'hero', 'unique']);
 const moments = [];   // { t, id, text, big, prog, zone, rode } (rode: a join said on the Champion card or a toast, not a card of its own)
 async function moment(id, text, o) {
   moments.push({ t: Math.round(gt * 10) / 10, id, text, big: !!o.big, prog: PROGRESS.has(id), zone: o.zone, rode: !!o.rode });
-  await note(page, 'moment', `${id}: ${text}`, { tag: 'moment-' + id, extra: { big: !!o.big } });
+  await note(page, 'moment', `${id}: ${text}`, { tag: 'moment-' + id, extra: { big: !!o.big }, key: PROGRESS.has(id) });
   if (o.quiet) return;   // walk-f3-in-fights: a new ability is logged for F3 only, so the placeholder and layout scans sample as before
   for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p);
   // eyes layout lint at the moment
@@ -1008,12 +1023,12 @@ async function run() {
         else if (gt - st.sigAt >= 90 && !st.stallNoted) { st.stallNoted = true; const c = await stallCause(o, st.sigAt); st.stalls.push(Object.assign({ t: Math.round(gt), from: Math.round(st.sigAt) }, c));
           await note(page, 'stall', `nothing moved for 90 s (${c.cause}): ${c.why}`, { tag: 'stall', extra: { cause: c.cause } }); addCheck('stall', 'the walk stalled for 90 s: ' + c.cause, c.why); } }
       if (gt - st.phAt >= 30) { st.phAt = gt; for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p); }
-      for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check); }   // every finding gets its shot
+      for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check, true); }   // every finding gets its shot
       let did = false;
       if (o.intro) {   // the opening's stills and Hesketh's fire: the bot taps through without reading, like the picker
         const sig = o.intro.trim();
         if (!st.introSeen) st.introSeen = new Set();
-        if (!st.introSeen.has(sig)) { st.introSeen.add(sig); await note(page, 'card', sig, { extra: { cls: 'intro' }, tag: 'card-intro' }); }
+        if (!st.introSeen.has(sig)) { st.introSeen.add(sig); await note(page, 'card', sig, { extra: { cls: 'intro' }, tag: 'card-intro', key: true }); }
         did = await click('#introScreen .intro-go', 300);
         if (did) await advance(300, 16);
       }
@@ -1345,6 +1360,9 @@ function report(res) {
   for (const c of fs_) out.push(`- **${c.check}** at ${fmtT(c.t)}${c.n > 1 ? ` (seen ${c.n} times)` : ''}: ${c.what}. ${c.detail}${c.shot ? ' Shot: `shots/' + c.shot + '`.' : ''}`);
   for (const e of [...new Set(res.errs)].slice(0, 6)) out.push(`- **page error**: ${e.slice(0, 200)}`);
   out.push('');
+  // walk-shots-span-session: where the shots fell, by 10-minute band of game time
+  { const bands = []; for (let b = 0; b * 600 < Math.max(reached, 1); b++) bands.push(`${b * 10}-${b * 10 + 10} min ${shotLog.filter(x => x.t >= b * 600 && x.t < b * 600 + 600).length}`);
+    out.push('## Shots', '', `${shotLog.length} of ${SHOT_BUDGET} (${shotLog.filter(x => x.key).length} key: progress moments, moment cards, the opening, new tabs and findings; ${shotLog.filter(x => !x.key).length} routine, spread over the walk). By band: ${bands.join(', ')}. Times: ${shotLog.map(x => fmtT(x.t)).join(', ') || 'none'}.`, ''); }
   // timeline
   out.push('## Timeline', '', 'Every tip, card, unlock and moment, with the game time it landed and its shot. Toasts and plain cards are in the json.', '', '| Time | Kind | What | Shot |', '|---|---|---|---|');
   for (const e of log.filter(e => ['tip', 'unlock', 'moment', 'nextup', 'gear', 'gate', 'stall', 'tab'].includes(e.kind) || (e.kind === 'card' && e.shot))) out.push(`| ${fmtT(e.t)} | ${e.kind} | ${e.text.replace(/\|/g, '/').slice(0, 110)} | ${e.shot ? '`' + e.shot + '`' : ''} |`);
@@ -1376,7 +1394,7 @@ const rep = report(res);
 fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
-fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
+fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop, shots: shotLog,
   scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, stalls: st.stalls, gold: goldLedger(st.prev && st.prev.econ), cover: Object.assign(coverSummary(), { pressLog: st.cover.presses, upgrades: st.cover.ups, refines: st.cover.orders }), checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));

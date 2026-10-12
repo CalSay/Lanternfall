@@ -1,0 +1,15 @@
+# Proof for card walk-shots-span-session (tooling only). No player-visible change: nothing in src/ changed and the game file is
+# unchanged, so there is nothing to play.
+#
+# Command, both runs: node tools/build.mjs && node tools/walk.mjs --seed 1 --quiet (base cc378494, Wren, 1280x720, 60 min, 30-min clock budget)
+#
+# Before (the base): 90 shots, the last at 6:31 game time. Of 13 moment cards (.mm-ov) 11 had no shot, and every progress moment
+#   after 6:31 (zone clears 3 to 16, the uniques, Stars, Tobin, Hesketh and Pip joining, abilities 2 to 9) had none. The walk's one
+#   finding (a stall at 42:13) had no shot. Played 58:28 in 1770 s of clock (stopped by the clock budget).
+# After (this branch): 88 of 90 (40 key: progress moments, moment cards, the opening, new tabs and findings; 48 routine, spread over the walk). By band: 0-10 min 40, 10-20 min 17, 20-30 min 12, 30-40 min 7, 40-50 min 7, 50-60 min 5.
+#   Every moment card (13 of 13), every progress moment (zone clear, ability, Star, hero join, unique: 37 of 37) and the finding
+#   have a shot. Routine shots (tips, Next Up, gear, other cards, level and craft lines) thin out to fit. Played 58:44 in 1770 s
+#   of clock: the same clock, no slower in game time.
+# The budget stays 90 (SHOT_BUDGET). The report's new "## Shots" section lists each shot's time and the count per 10-minute band;
+# the json carries the same list as "shots".
+# Local: node tools/check.mjs --only="walk" passes (first-hour walk section, 9 checks).
