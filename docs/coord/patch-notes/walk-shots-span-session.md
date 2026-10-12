@@ -1,0 +1,1 @@
+Tooling only, no change to the game. Our test walk used to spend all 90 of its screenshots in the first 7 minutes. It now saves them for what matters: every boss win, moment card, new hero and finding gets one across the whole hour, and routine shots are spread out to fit.
