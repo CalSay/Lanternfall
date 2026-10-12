@@ -37,8 +37,34 @@ function trainingCoreFiles() {
   }
   return trainingFiles;
 }
+// fixture-clock: a check that loads a saved fixture runs at a clock tied to that fixture, not today's date. A save whose `last` is
+// a fixture's own saved time (tests/fixtures, tests/proof-fixtures) loads with the game's clock moved to FIXTURE_CLOCK_AFTER past
+// it (the clock still runs), so a later week, month or day never pays weekly goals or rolls days under a check. A section
+// that pins its own clock (a prelude setting Date.now) or rewrites `last` (save.last = Date.now()) keeps its own clock.
+// A save a pinned game wrote reloads on that clock. newContext does the same for pages; { wall } moves the unpinned clock (the
+// 'fixture-clock' guard), { fixtureClock: false } skips the pin.
+const FIXTURE_CLOCK_AFTER = 60e3;
+const FIXTURE_LASTS = new Set(['fixtures', 'proof-fixtures'].flatMap(d => fs.readdirSync(path.join(ROOT, 'tests', d)).filter(f => f.endsWith('.json'))
+  .map(f => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', d, f), 'utf8')).last; } catch (e) { return null; } })).filter(t => t > 0));
+const clockPrelude = at => `{ const __R = Date, __n = __R.now.bind(__R), __d = ${+at} - __n();
+  Date = class extends __R { constructor(...a) { if (a.length) super(...a); else super(__n() + __d); } static now() { return __n() + __d; } }; }\n`;
+// fixtureShift: the last pin's distance from today, so a save a pinned game wrote (its `last` nearer that clock than today) reloads
+// on the same clock, as the page does with lanternfall.test.clock. Each section starts with none (section()); a load at a moved
+// `wall` keeps its distance from that wall, so a later load at the same wall reloads on the same clock.
+let fixtureShift = 0;
+function fixtureClockAt(storage, today) {
+  const all = storage && typeof storage.dump === 'function' ? storage.dump() : {};
+  for (const v of Object.values(all)) {
+    let t; try { t = JSON.parse(v).last; } catch (e) { continue; }
+    if (FIXTURE_LASTS.has(t)) { fixtureShift = t + FIXTURE_CLOCK_AFTER - today; return t + FIXTURE_CLOCK_AFTER; }
+    if (fixtureShift && typeof t === 'number' && Math.abs(t - (today + fixtureShift)) < Math.abs(t - today)) return today + fixtureShift;
+  }
+  return null;
+}
 function loadCore(opts) {
-  const o = opts || {};
+  let o = opts || {};
+  const pin = o.fixtureClock === false || /Date\.now\s*=/.test(o.prelude || '') ? null : fixtureClockAt(o.storage, o.wall || Date.now());
+  if (o.wall || pin) o = { ...o, prelude: (o.wall ? clockPrelude(o.wall) : '') + (pin ? clockPrelude(pin) : '') + (o.prelude || '') };
   const g = loadCoreRaw(o.training ? { ...o, files: o.files || trainingCoreFiles() } : o);
   if (!o.turns) try { g.eval("TURN_TUNE.on = 0"); } catch (e) {}
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
@@ -56,7 +82,28 @@ if (browserTools.pw) {
   const launch = browserTools.pw.chromium.launch.bind(browserTools.pw.chromium);
   browserTools.pw = Object.assign(Object.create(browserTools.pw), { chromium: Object.assign(Object.create(browserTools.pw.chromium), { launch: async (...a) => {
     const b = await launch(...a), newContext = b.newContext.bind(b);
-    b.newContext = async (opts = {}) => { const { turns, story, webFonts = true, ...o } = opts, ctx = await newContext(o);
+    b.newContext = async (opts = {}) => { const { turns, story, webFonts = true, fixtureClock = true, wall = 0, ...o } = opts, ctx = await newContext(o);
+      // fixture-clock (see loadCore): a page whose save's `last` is a fixture's own time runs its clock from FIXTURE_CLOCK_AFTER past
+      // it. The page keeps that clock (lanternfall.test.clock) across reloads and tabs while the save's `last` sits nearer it than
+      // today, so a save the page wrote itself reloads on the same clock and a save stamped with today's time runs on today's.
+      // A section's own page.clock.install replaces this Date, so it keeps its own clock. { wall } moves today (the guard).
+      if (fixtureClock || wall) await ctx.addInitScript(({ lasts, after, wall, pin }) => {
+        const R = Date, now0 = () => R.now() + wall, K = 'lanternfall.test.clock';
+        let d = null;
+        const shift = () => {
+          if (d !== null) return d;
+          d = 0;
+          if (!pin) return d;
+          try {
+            const last = (JSON.parse(localStorage.getItem('lanternfall.save.v5') || 'null') || {}).last, kept = +localStorage.getItem(K) || 0;
+            if (lasts.includes(last)) { d = last + after - now0(); localStorage.setItem(K, String(d)); }
+            else if (kept && typeof last === 'number' && Math.abs(last - (now0() + kept)) < Math.abs(last - now0())) d = kept;
+          } catch (e) {}
+          return d;
+        };
+        const at = () => now0() + shift();
+        window.Date = class extends R { constructor(...a) { if (a.length) super(...a); else super(at()); } static now() { return at(); } };
+      }, { lasts: [...FIXTURE_LASTS], after: FIXTURE_CLOCK_AFTER, wall, pin: fixtureClock });
       // display-fallback-font: the page's Google Fonts link is aborted in checks, so every page gets the players' faces from
       // tests/fonts/ (Google's own woff2 subsets and unicode ranges, SIL OFL). The published page never carries them. A failure
       // here is a page error, which the sections count. newContext({ webFonts: false }) measures what a player whose web fonts
@@ -118,6 +165,7 @@ const WEIGHT = {
   'fx-timing-fixes': 40,
   'pip-cast-recipes': 40,
   'page size': 2,
+  'fixture-clock': 33,   // 33 s locally alone (fixture-clock-audit, 2026-10-12)
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'leave-mid-fight-gathers (browser)': 15,
   'deepwell-spillover-keeps-fight': 12,   // 12 s locally alone (deepwell-spillover-keeps-fight, 2026-10-11)
@@ -139,6 +187,7 @@ const shardOf = {};
 if (SHARD) for (const [n, w] of Object.entries(WEIGHT).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))) { const k = lightest(); shardOf[n] = k; shardLoad[k] += w; }
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
+  fixtureShift = 0;
   if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes the rest
     let k = shardOf[name];
     if (k === undefined) { k = lightest(); shardLoad[k] += 2; }
@@ -13663,6 +13712,64 @@ if (section('next tier gate')) try {
   l = g3.eval('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
   assert(!l.some(x => /Hunting \d+ of 64/.test(x.label)), `next tier gate: no Hunting 64 gate for a hide grade that is never offered (${JSON.stringify(row(l))})`);
 } catch (e) { fail('next tier gate crashed: ' + (e.stack || e)); }
+
+// ==== fixture-clock: a saved fixture loads on its own clock, whatever today's date (fixture-clock-audit) ====
+// Every fixture in tests/fixtures and tests/proof-fixtures loads through loadCore with today moved to 8 and 32 days past its
+// `last` and must give the same game: the clock reads FIXTURE_CLOCK_AFTER past `last` and the state (timestamps aside) matches.
+// Without the pin the same two loads differ for some fixture (a new week pays weekly goals), so the guard can tell. A page does
+// the same with save-tier-gate.json, the fixture that turned the base red on Mon 12 Oct 2026, and keeps that clock over a reload.
+if (section('fixture-clock')) try {
+  const DAY = 864e5, files = ['fixtures', 'proof-fixtures'].flatMap(d => fs.readdirSync(path.join(ROOT, 'tests', d)).filter(f => f.endsWith('.json')).map(f => [d, f]));
+  const state = (raw, wall, fixtureClock) => {
+    const last = JSON.parse(raw).last, g = loadCore({ seed: 7, wall, fixtureClock, storage: memoryStorage({ [KEY]: raw }) });
+    g.eval('tick(0.1)');
+    return { at: g.eval('Date.now()') - last, S: g.eval(`JSON.stringify(S, (k, v) => (typeof v === 'number' && Math.abs(v) > 1e12 && Math.abs(v) < 1e13 ? 't' : v))`) };
+  };
+  let pinned = 0, drift = [], bad = [];
+  for (const [d, f] of files) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', d, f), 'utf8'), last = JSON.parse(raw).last;
+    const a = state(raw, last + 8 * DAY), b = state(raw, last + 32 * DAY);
+    if (a.S !== b.S || !(a.at >= FIXTURE_CLOCK_AFTER && a.at < FIXTURE_CLOCK_AFTER + 60e3) || !(b.at >= FIXTURE_CLOCK_AFTER && b.at < FIXTURE_CLOCK_AFTER + 60e3)) bad.push(`${f} (${a.at} / ${b.at} ms past last${a.S !== b.S ? ', state differs' : ''})`);
+    else pinned++;
+    if (state(raw, last + 8 * DAY, false).S !== state(raw, last + 32 * DAY, false).S) drift.push(f);
+  }
+  assert(!bad.length && pinned === files.length, `fixture-clock: all ${files.length} fixtures load a minute after their own save, with the same state, 8 and 32 days on (${bad.join('; ') || pinned + ' alike'})`);
+  { // a save the pinned game wrote reloads on the same clock (a reload check's away gap stays seconds, as it was before the pin)
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8'), last = JSON.parse(raw).last;
+    const g = loadCore({ seed: 7, wall: last + 8 * DAY, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1); save()');
+    const h = loadCore({ seed: 7, wall: last + 8 * DAY, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) }), back = h.eval('Date.now()') - last;
+    const t = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(raw), last: Date.now() }) }) }), today = t.eval('Date.now()') - Date.now();
+    assert(back >= FIXTURE_CLOCK_AFTER && back < FIXTURE_CLOCK_AFTER + 60e3 && Math.abs(today) < 60e3, `fixture-clock: a reload of the pinned game's own save stays on the fixture's clock (${Math.round(back / 1e3)} s past last), a save stamped today runs on today (${today} ms)`);
+  }
+  assert(drift.length > 0, `fixture-clock: unpinned, the same loads differ 8 and 32 days on for ${drift.length} fixture(s), so the guard can see drift (${drift.slice(0, 6).join(', ')})`);
+  const { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8'), last = JSON.parse(raw).last;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('fixture-clock: Playwright or Chromium not here, page part skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const run = async (days, fixtureClock) => {
+        const ctx = await browser.newContext({ turns: true, fixtureClock, wall: last + days * DAY - Date.now(), viewport: { width: 1280, height: 720 } });
+        await ctx.addInitScript(([k, s]) => { try { if (!sessionStorage.getItem('fc.once')) { sessionStorage.setItem('fc.once', '1'); localStorage.setItem(k, s); } } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const o = { at: await X('Date.now()') - last, mats: await X('JSON.stringify(S.mats)') };
+        await X('save(); true'); await page.reload(); await page.waitForTimeout(800);
+        o.reload = await X('Date.now()') - last; o.errs = errs.length;
+        await ctx.close(); return o;
+      };
+      const a = await run(8, true), b = await run(32, true), c = await run(8, false);
+      const near = t => t >= FIXTURE_CLOCK_AFTER && t < FIXTURE_CLOCK_AFTER + 60e3;
+      assert(near(a.at) && near(b.at) && a.mats === b.mats && !a.errs && !b.errs, `fixture-clock: a page loads save-tier-gate a minute after its save 8 and 32 days on, same bag (${Math.round(a.at / 1e3)} s / ${Math.round(b.at / 1e3)} s)`);
+      assert(a.reload > a.at && a.reload < a.at + 60e3 && b.reload < b.at + 60e3, `fixture-clock: after the page saves, a reload keeps the fixture's clock (${Math.round(a.reload / 1e3)} s past last)`);
+      assert(c.at > 8 * DAY - 60e3 && c.at < 8 * DAY + 60e3, `fixture-clock: { fixtureClock: false } leaves the page on today's clock (${(c.at / DAY).toFixed(2)} days past last)`);
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fixture-clock crashed: ' + (e.stack || e)); }
 
 // ---- boss tiers, first hour (card boss-tiers PR 1, judge 2026-10-07): the zone-boss hit cap and the first-hour knots ----
 if (section('boss tiers first hour')) try {

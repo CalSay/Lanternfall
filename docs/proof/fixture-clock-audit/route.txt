@@ -1,0 +1,8 @@
+# seed: 1
+# Proof for card fixture-clock-audit (tooling only; tools/check.mjs loadCore, newContext and the 'fixture-clock' section). Nothing
+# a player sees changes. The proof is proof.md (every fixture load in check.mjs and its clock, the +8 and +32 day runs) and the
+# check lines "fixture-clock: all 57 fixtures load a minute after their own save, with the same state, 8 and 32 days on". This
+# route only loads the fixture that turned the base red on Mon 12 Oct 2026 to show it runs.
+new tier-gate
+wait-for "#nuChip" 10
+shot tier-gate-loads
