@@ -1,1 +1,2 @@
 Fewer strange words in the first hour. Essence is just "Essence" until you find your first Glowing Essence; from then on every kind is named. The first weapon's line now says foes drop it. Building the Forge no longer brings a Coal and Ingots message: the first time an upgrade needs Ingots, the game tells you the Forge makes them from ore and coal, and that mining Copper Ore brings the coal.
+Best shot: camp-essence-plain
