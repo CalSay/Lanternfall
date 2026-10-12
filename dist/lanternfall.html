@@ -42010,7 +42010,7 @@ let showAwayReport, awayLimitStep;
 // A cache shows through the moment layer (75-moments-ui): a big card, or, once the player is on auto-open, a medium banner unless it
 // holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
 // thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
-// This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+// It loads before 75-moments-ui, so the moment layer's names are read in the handler, never at load.
 // boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now, when two or more
 // moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never sorted (the top move is marked: see cache-pick-order-settles below); Keep the
 // Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
@@ -42074,12 +42074,12 @@ on('cacheOpen', v => {
   const sp = spoilsMoves(v);
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1 || !!sp;   // a pick needs the card (zones 6 to 10 only)
   const lines = [];
-  // look-card-says-why: the colour's own line says what it did, whatever the sub line shows (the desk player asked what a colour was)
+  // look-card-says-why, cache-card-plain: the colour's own line says what it did and that it is a look
   if (v.look) { const ln = v.look.n.replace(/ lantern$/, '');
-    lines.push({ txt: v.look.worn ? `Your lantern burns ${ln} now.` : `New lantern colour: ${ln}. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
+    lines.push({ txt: v.look.worn ? `New look: your lantern burns ${ln}.` : `New look: the ${ln} lantern. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
   if (v.unique) {
     lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
-    const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
+    const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: where a unique you cannot wear went
   }
   if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
   if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
@@ -42089,12 +42089,12 @@ on('cacheOpen', v => {
   if (v.ess && !v.essFull) pay.push(`${v.ess} Essence`);
   if (pay.length) lines.push({ txt: pay.join(', ') });
   if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
-  // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
+  // the colour, best first: a unique, the lantern colour, a Star, a Scroll
   const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
   const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
-  // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
-  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
+  // the sub: did a unique drop, else its odds on this win (honest, with modifiers)
+  const sub = v.unique ? `A unique dropped: ${v.unique.name}.` : v.chance != null ? `No unique this time (${v.chance}% chance on this win).` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
   if (sp) { Object.assign(o, spoilsPicks(v, sp)); setTimeout(() => spoilsFill(sp), SPOILS_TUNE.waitMs); }
   o.actions = [];
@@ -42109,10 +42109,10 @@ on('cacheOpen', v => {
       if (q.kind === 'boss' || (q.kind === 'unique' && v.unique && q.title === v.unique.name)
         || ((q.kind === 'starFirst' || q.kind === 'star') && v.star && q.title === v.star.name)) { if (q.bark) barks.push(q.bark); MOMENT_Q.splice(i, 1); }
     }
-    // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
+    // the hero's line for what the card carries (55-voice): the strongest folded bark
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
   }
-  // the cache folds into that card, so the win is one card
+  // the cache folds into that card: the win is one card
   const cj = ci >= 0 ? MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone) : -1;   // the fold loop above spliced, so ci may be stale
   if (cj >= 0) {
     const c = MOMENT_Q.splice(cj, 1)[0];

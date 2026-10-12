@@ -1,0 +1,111 @@
+# seed: 1
+# Proof for card cache-card-plain: the first boss falls and the Lantern Cache card says, in plain words, whether a unique
+# dropped ("No unique this time (15% chance on this win)." or "A unique dropped: Briar Sprig.") and calls the lantern colour a
+# look ("New look: your lantern burns Ember Red."). Fixture boss1, the cache-core fight.
+# A route cannot force the unique roll either way, so the route expects only the look line; both sub lines and the
+# owned-not-worn colour line are held by tools/check.mjs, section 'look-card-says-why'.
+new boss1
+wait 2
+tap-if "Got it"
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+wait 3
+expect .mm-card
+expect "Lantern Cache"
+expect "New look: your lantern burns Ember Red."
+expect "gold"
+expect "Moss Scroll"
+expect .mm-head
+shot cache-card-plain
+wait 3
+tap "Continue"
+wait 2
+shot stage-ember
