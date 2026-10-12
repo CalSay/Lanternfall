@@ -86,11 +86,18 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   read the zone 2 boss odds from save-flow-cold-camp). A proof fixture's level must be one the road can reach at its maxZone (zone 2
   means level 4+); if a check needs an under-levelled hero, say so in its comment. Why: the reviewer caught 12 fails outside
   `sim|health|zone` from a level 1 Wren at zone 2. (zone-1-3-foe-curve, 2026-10-11)
+- A zone 4 boss HP change also runs `--only="boss"`: 'boss tiers first hour' wants the zone 5 Champion at 1.5x zone 4's boss HP in
+  reference Attacks, so zone 4's boss (and the foes under it) has a ceiling. Why: x2.7 on zone 4's boss failed it (zone-4-6-foe-curve, 2026-10-11).
+- Read health's `casual.zoneEnd` over 5 seed offsets before calling it a regression: a casual bot either breaks out of a farm loop
+  (old-zone fights for a material) and reaches zone 13-15, or never comes back to its boss and ends at 10, so one offset moves by 5.
+  Why: offset 0 read +2.5 on zone-4-6-foe-curve while the 5-offset mean moved +0.7 against the base's own 5 offsets (2026-10-11).
+- A veto recipe lists every table the card touched, at its old value, and says which ones its gate does not cover. Why: the reviewer found zone-4-6-foe-curve's undo put back only the zone 4 `normHitX` knot; `normHitX` is not gated by `early.to`, so zone 5-6 foes would have kept the new hits on the old HP (2026-10-11).
 - Before writing a player line for a status (Exposed, Guard, Armour, Stun), read what the code does in every case and build the line from the move that landed, not a fixed sentence. Why: the red team on first-hour-jargon found all three drafted lines false: Exposed pays off only on the hero's payoff hits (59k-turn.js:524, 649), a Perfect Bash guards 3 turns not 2 (59k:744), and armour cuts abilities too (59k:521). (first-hour-jargon, 2026-10-11)
 
 ## Economy and skilling
 
 - Ask Cal before `node tools/health.mjs --write-baseline`, naming each moved metric, which way it moved and the judge's ruling. Why: rewriting the bar CI scores against was blocked as a CI bypass until Cal said yes (gold-without-training, 2026-10-07).
+- A judge's ruling does not lift that: re-centring a two-sided health metric with its tolerance kept was blocked as a CI bypass the same way, so ask Cal before the edit, not after the judge. Why: zone-4-6-foe-curve's casual.zoneEnd edit (2026-10-11).
 - Read `docs/design/systems-map.md` flags before touching an economy card. Open flags: wood and essence pile up, iron ore is idle (Transmute is lossy), cobalt needs Mining 64 with no hint, Smithing is dead past 54, gold is the only mid-game choke, Renown/Stamps/boss tokens have no spend, tents 6 to 10 are unbuildable, the Renown Day omen does nothing. (systems-map, 2026-10-06)
 - Register any new currency-like counter in the systems map with a source and a sink. Why: the check fails on a currency with no source or sink, and on an unregistered counter. (systems-map, 2026-10-06)
 - Check any reward or shop design against the standing reward lines in `DECISIONS.md` (enemies never drop crafting materials; gold is the flat camp budget; the Armoury owns bag room and loadouts) before proposing what it pays. Why: the monetisation red team found caches paying materials and a paid Armoury room that the Armoury building already sells. (monetisation plan, 2026-10-06)

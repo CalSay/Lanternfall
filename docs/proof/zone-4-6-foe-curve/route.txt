@@ -1,0 +1,34 @@
+# seed: 1
+# Proof for card zone-4-6-foe-curve. Wren at the level a player meets each fight with (the early fixture, set to zone 4 at level 8,
+# zone 4's boss at level 9, then zone 5 at level 10), at 1280x720, 740x360 and 360x740. Read the foe's HP on its plate:
+#   zone4-foe.png   a zone 4 Barrow Beetle has the zone's own HP, about 7.2K (each foe rolls +-5%; before this card about 10.2K at level 8, and it grew
+#                   with every level: 8 of the hero's plain Attacks)
+#   zone4-boss.png  the zone 4 boss, the Elder Barrow Beetle, has about 7.8K, more than its foes (before: 4.1K, under half of them)
+#   zone5-foe.png   a zone 5 Spore Cap has more HP than zone 4's (about 12.5K to 13K), but less than the 16.8K it had at level 10 before
+# The numbers behind it (HP, pay and hits by zone, and the fight lengths) are held by tools/check.mjs ("zone-1-6-foe-curve") and
+# docs/proof/zone-4-6-foe-curve/curve.md.
+new early
+wait 2
+tab new zone=4 maxZone=4 kills=0 L=8
+wait 4
+tap-if "Continue"
+tap-if "Skip"
+wait 2
+expect "Zone 4"
+shot zone4-foe
+tab new zone=4 maxZone=4 kills=5 L=9
+wait 4
+tap-if "Continue"
+tap-if "Skip"
+wait 4
+tap-if "Skip"
+wait 2
+expect "Zone 4"
+shot zone4-boss
+tab new zone=5 maxZone=5 kills=0 L=10
+wait 4
+tap-if "Continue"
+tap-if "Skip"
+wait 2
+expect "Zone 5"
+shot zone5-foe
