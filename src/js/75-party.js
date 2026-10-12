@@ -2,7 +2,7 @@
 // the gear row), the Stars entry and the rest of the tab's sections that other files register. Tapping the card opens the hero
 // sheet (75-party-sheet.js). The team view, bench, line-up planner, combos, Bonds and roster were deleted with the party (W3-A).
 {
-  const { safe, heroClass, portrait, pip, slotTile, HERO_GEAR_NOUN, HERO_SLOTS, heroTitle } = PTY;
+  const { safe, heroClass, portrait, pip, slotTile, emptySlot, HERO_GEAR_NOUN, HERO_SLOTS, heroTitle } = PTY;
   const P = () => S.party;
   const setT = (n, t) => { if (n.textContent !== t) n.textContent = t; };
   const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
@@ -40,9 +40,9 @@
       const pos = s.old || s.id, open = pos in S.equip;   // off-hand and body are hero positions since crafting (K4)
       const it = open ? equipped(pos) : null;
       const d = el('div', 'pc-slot' + (open ? '' : ' soon'));
-      const tile = it ? slotTile(it) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm');
+      const [tile, kit] = it ? [slotTile(it), ''] : emptySlot(pos);
       d.append(tile, el('small', null, nouns[s.id] || s.n));
-      setTip(d, it ? itemName(it) : open ? 'Empty' : 'Coming with crafting');   // desktop-tooltips: was a title
+      setTip(d, it ? itemName(it) : kit || (open ? 'Empty' : 'Coming with crafting'));   // desktop-tooltips: was a title
       gearBox.append(d);
     }
     card.append(gearBox);

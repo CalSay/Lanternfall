@@ -1,0 +1,35 @@
+# seed: 1
+# Proof for card starting-kit-shown (Sunday release check 11 Oct: "Gear slots read empty while Hesketh talks of a Stone Pick
+# and a starting sword"). Fixture flow-cold-camp: Wren, zone 2, nothing worn, no gear made yet.
+# Before: the Gear view showed every slot as a dark empty ghost, while Hesketh's tip ("faster than your Stone Pick") and the
+# craft card ("Better than your starting bow") named kit the player could not see.
+# After: the empty Weapon slot reads "Starting bow" and the tool slots read "Stone Pick", "Flint Hatchet" and "Bone Sickle",
+# each with its icon in plain grey. A made tool takes the slot back to its own name.
+#   kit-shown.png      the Gear view on a new save: the starting kit in its slots
+#   pickaxe-made.png   after the Copper Pickaxe: the Pickaxe slot holds it; the bow and the other rough tools still show
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Gear"
+wait 1
+tap-if "Got it"
+expect "Starting bow"
+expect "Stone Pick"
+expect "Flint Hatchet"
+expect "Bone Sickle"
+expect "#sec-craft-gear .ic.kit"
+shot kit-shown
+tap "Craft"
+wait 1
+tap "Craft Copper Pickaxe"
+wait 1
+tap "Hero"
+wait 1
+tap "Gear"
+wait 1
+expect-no "Stone Pick"
+expect "Starting bow"
+expect "Flint Hatchet"
+shot pickaxe-made

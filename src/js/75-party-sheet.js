@@ -34,10 +34,14 @@ let openSheet, partySheet;
     try { return itemIcon(it.slot, it.t, it.u); } catch (e) { return iconURL('charm', '#A9B1BD'); }
   }
   const itemFrame = it => it.u ? 'legendary' : it.r;
-  function slotTile(it, emptyIcon, size) {
-    const t = it ? icTile(itemIc(it), itemFrame(it)) : icTile(iconURL(emptyIcon, '#4E4060'), null, 'ghost soon');
+  function slotTile(it, emptyIcon, size, kit) {
+    const t = it ? icTile(itemIc(it), itemFrame(it)) : kit ? icTile(iconURL(emptyIcon, '#A9B1BD'), null, 'kit') : icTile(iconURL(emptyIcon, '#4E4060'), null, 'ghost soon');
     if (size) t.classList.add('s' + size);
     return t;
+  }
+  function emptySlot(pos, size) {
+    const kit = craftUI ? craftUI.kitName(pos) : '';
+    return [slotTile(null, craftUI ? craftUI.kitIcon(pos) : 'charm', size, kit), kit];
   }
   // The player's Codex title (57c codexTitle), cached by the chosen title's id.
   let ctKey, ctVal = '';
@@ -47,7 +51,7 @@ let openSheet, partySheet;
     return ctVal;
   };
 
-  Object.assign(PTY, { heroTitle, HERO_GEAR_NOUN, HERO_SLOTS, safe, heroClass, portrait, pip, slotTile });
+  Object.assign(PTY, { heroTitle, HERO_GEAR_NOUN, HERO_SLOTS, safe, heroClass, portrait, pip, slotTile, emptySlot });
 
 
   // ================= generic bottom sheet =================
@@ -199,9 +203,10 @@ let openSheet, partySheet;
       const pos = s.old || s.id, open = pos in S.equip;   // off-hand and body are hero positions since crafting (K4)
       const it = open ? equipped(pos) : null;
       const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
-      d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
+      const [tile, kit] = it ? [slotTile(it, null, 56), ''] : emptySlot(pos, 56);
+      d.append(tile);
       d.append(el('small', null, nouns[s.id] || s.n));
-      setTip(d, it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.');   // desktop-tooltips: was a title
+      setTip(d, it ? itemName(it) : kit ? kit + '. Choose better gear in the Gear view, next to Hero.' : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.');   // desktop-tooltips: was a title
       g.append(d);
     }
     body.append(section('Gear', g, '', el('p', 'note', 'Wear and swap gear in the Gear view, next to Hero. Make new gear in Craft.')));
