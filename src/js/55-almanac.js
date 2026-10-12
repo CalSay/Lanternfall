@@ -11,13 +11,7 @@
 // and are skipped: that day plays a fallback Omen. They switch on by themselves when the
 // system lands (see AL_NEEDS), as long as it reads the modifier/bonus keys listed here.
 //
-// Exposed: almanac (API object, below), OMENS, WEEKLY_GOALS.
-// Modifier keys read by other files: gold, xp, essence, crit, critDmg, dmg, gatherSpeed,
-// offline, raid, yield:<family>, skillXp:<skill>, uniqueChance (50-sim kill),
-// foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
-// rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
-// Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties), gradeLv (40-rules, craft-attribute-grades),
-// (bossTime is gone with the boss timer, owner 2026-10-01.)
+// Exposed: almanac (API object, below), OMENS, WEEKLY_GOALS. Its modifier and bonus keys are read where they apply (grep the key).
 
 const almanac = {};
 let OMENS, WEEKLY_GOALS;
@@ -390,7 +384,7 @@ let OMENS, WEEKLY_GOALS;
       g.have = Math.min(g.need, g.have + n);
       if (g.have >= g.need) {
         g.done = true;
-        toast(`Weekly goal done: ${WEEKLY_GOALS[g.k].txt(g.need)}. Claim it in the Almanac.`, 'good', { ic: WEEKLY_GOALS[g.k].ic });
+        if (!sideShut('almanac')) toast(`Weekly goal done: ${WEEKLY_GOALS[g.k].txt(g.need)}. Claim it in the Almanac.`, 'good', { ic: WEEKLY_GOALS[g.k].ic });
         emit('weeklyDone', { k: g.k });
       }
     }
@@ -469,7 +463,7 @@ let OMENS, WEEKLY_GOALS;
 
   function awayLine(r) {
     const gains = r.kills || r.gold >= 1 || r.xp >= 1 || (r.mats && r.mats.length) || r.raidDmg >= 1 || (r.skills && r.skills.length) || (r.items && r.items.length);
-    if (!gains) return null;
+    if (!gains || sideShut('almanac')) return null;   // no Almanac or Omen word before its row (no-word-before-its-tab)
     const out = [], t = omenFor(today()), was = r.omen && OMEN_BY[r.omen];
     if (was && r.omenHelped) out.push({ icon: { ic: was.ic }, txt: `${was.n} helped while you were away. ${was.fx}.`, sub: 'The Omen of the day you left covers your whole time away.' });
     out.push({ icon: { ic: t.ic }, txt: `Today: ${t.n}. ${t.fx}.`, sub: t.dare ? `You can take the Dare in the Almanac: ${t.dare.n}.` : 'See the Almanac on the Camp tab.' });

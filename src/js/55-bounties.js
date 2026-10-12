@@ -137,7 +137,7 @@
     });
   }
   on('bountyReady', ({ i, away }) => {
-    const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
+    const b = S.bounties.slots[i]; if (away || !b || !b.k || sideShut('bounties')) return;   // away catch-up: the away card tells it; before the row opens, its line does
     emit('toast', { key: 'bounty-ready', msg: "Bounty ready to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } },
       still: () => S.bounties.slots.some(x => x && x.k && x.have >= x.need), goLog: { tab: 'adv', sel: '#sec-bounties' } });
   });

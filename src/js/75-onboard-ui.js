@@ -66,12 +66,12 @@
   const SAY_TXT = {
     party: "The Hero tab is open now. Your level, points and moves are kept there.",
     gather: "You can gather now. Bring me Pine Log for a proper fire, and we'll talk once it's lit.",
-    bounties: "Folk have posted bounties on the Fight tab. They pay well for small jobs.",
+    bounties: "Bounties are short jobs, on the Fight tab. They pay gold, materials and Renown.",
     camp: "There. That's a camp. Build on it from the Camp tab.",
     forage: "You can forage now, under Gather. You'll mostly find fibre and herbs.",
     craft: 'You can make your own gear now. Craft is open.',
-    bestiary: "The Bestiary is open on the Fight tab. It remembers every foe you've met.",
-    almanac: "There's an Almanac at camp now. It tells you today's Omen.",
+    bestiary: "The Bestiary is on the Fight tab. Kill five of one foe and you learn what hurts it most.",
+    almanac: "There's an Almanac at camp. Each day it names an Omen, a small bonus such as more gold.",
     uniques: 'Bosses sometimes drop rare gear. Craft keeps it, under Uniques.',
     tavern: "There's a Tavern at camp now. Folk on the road stop in there.",
     codex: "You've a Codex now, in the Journal. It keeps track of what you've found.",
@@ -108,7 +108,7 @@
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
   let slotAb = '', scrollId = 'moss', slotUsed = false, slotSeen = false;   // the move just learned (the slot line), whether it has been pressed since and its line seen on the Hero menu; the first Scroll found (the Scroll line)
-  const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
+  const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return sideNow(id) || (typeof t === 'function' ? t() : t); } catch (e) { return ''; } };
   // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
     // stale-guide-tips: dropped once its place was opened
@@ -474,6 +474,7 @@
     // button would take the fight bar's tab row, 80-landscape.css .guide-btn)
     if (spec && use && STOCK_WHAT[step.id.slice(4)]) spec.go = stockGo(step.id.slice(4));
     if (spec && stockSide && fightingNow()) spec.go = null;
+    if (spec && step.id === 'say:bounties' && sideNow('bounties')) spec.go = { label: 'Claim it', fn: () => { const j = btyDone(); if (j >= 0) BOUNTY_API.claim(j); } };
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();

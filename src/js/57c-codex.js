@@ -1,47 +1,11 @@
 // 57c-codex: the Codex and Lantern Light (docs/design/codex.md, Region 1).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
-// Rules: most entries are READ from state other systems already save (mastery, S.found, the
-// roster, stories, camp levels, the Almanac, achievements). The
-// Codex records only what nothing else keeps: champion kills by type, affix tiers and Masterwork
-// lines seen, synergies switched on, materials held by tier, Dares taken.
-// Lantern Light = sum over visible pages of entries found x Light each, halves rounded down at
-// the end. It is never spent and never goes down (codexLight() is the highest value seen).
-// Light gives no direct power: milestones give titles, cosmetics and quality-of-life perks.
-// Page rewards: at 50% the page's Blessing opens at the Shrine (setBlessingGate); at 100% a Page
-// Seal gives a title and a tiny bonus, capped per stat by CODEX_CAP forever (all regions).
-//
-// Performance: pages are recomputed only when an event marked the Codex dirty, at most every
-// CODEX_TUNE.every seconds (a few hundred cheap reads), plus a slow safety sweep. Nothing here
-// scans the bag or other big collections on a tick.
-//
-// Exposed names:
-//   data   CODEX_PAGES (page defs), CODEX_PAGE_IDS, CODEX_MILESTONES, CODEX_CAP, CODEX_TUNE
-//   read   codexPages() -> [page view], codexPage(id) -> page view | null
-//            page view: { id, n, locked, lockTxt, got, max, pct, light, lightMax, half, seal,
-//                         bless, sealTxt, title, tiles: [{ key, n, got, max, pts, ptsMax, hint, sub, ic, grp }] }
-//          codexLight(), codexNext() -> next milestone | null, codexHas(rewardId) -> bool,
-//          codexBonus(key) (capped Seal bonus, 0..CODEX_CAP[key]), codexTitle() -> title text | '',
-//          codexTitles() -> [{ id, n, src, got }], codexExact() (exact hints unlocked),
-//          codexNews() -> pages with entries the player has not looked at, codexIsNew(pageId, i)
-//   act    codexRefresh(force) -> light, codexSeen(pageId) -> [tile indexes that are new] (and
-//          marks them seen), codexSetTitle(id | null) -> bool, codexMilestonesSeen()
-//
-// Events emitted: codexLight { light, gain }, codexPage { id, kind: 'half' | 'seal' },
-//   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
-// Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, bondLevel, harvest,
-//   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, omen,
-//   weeklyClaim, deedFeat, zoneClear, loot, transmuted, crafted.
-// Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
-//   Seal keys, addBonus: deepOil, and three
-//   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
-//
-// Save: registerState('codex', { v, rec, got, title, lightMax, init, half, seal, seen, mSeen }).
-//   rec: champ {typeKey: 1}, aff {affixId: tier bitmask}, mw {trophyIdx: 1},
-//        mat {family: tier bitmask, troph: type bitmask}, dare {omenId: 1}
-//   got: milestone Light -> timestamp. half / seal: pageId -> timestamp (permanent once earned).
-//   seen: pageId -> string, one base-36 char per tile = units the player has looked at (for the
-//   one-time glow). mSeen: highest milestone the player has looked at (the "New" dot).
+// Rules: most entries are read from state other systems save; the Codex records only what nothing else keeps. Lantern Light
+// never goes down and gives no direct power (milestones: titles, cosmetics, quality of life). A page half full opens its Blessing
+// at the Shrine; a full page's Seal gives a title and a tiny bonus capped by CODEX_CAP. Pages recompute only when marked dirty.
+// API: codexPages/Page/Light/Next/Has/Bonus/Title/Titles/Exact/News/IsNew, codexRefresh/Seen/SetTitle/MilestonesSeen.
+// Emits codexLight, codexPage, codexMilestone, codexOpen, codexInit. Save: S.codex (rec, got, half, seal, seen: base-36 per tile).
 
 const CODEX_TUNE = { every: 5, sweep: 60, goalFrom: 0.6 };
 const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05, offline: 0.05,
@@ -345,19 +309,21 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     for (const m of CODEX_MILESTONES) if (light >= m.at && !CX().got[m.at]) { CX().got[m.at] = Date.now(); out.miles.push(m); }
     if (out.pages.some(x => x.kind === 'seal')) rebuildSeals();
     if (quiet) return out;
+    const shut = sideShut('codex');   // no-word-before-its-tab: no Codex word before its row; the open line says what is waiting
     for (const x of out.pages) {
       const P = CODEX_PAGES[x.id];
       // W1-B: channels in 23n-data-notices ('codex': the bell; 'codex-small': the bell list only)
-      if (x.kind === 'half' && x.p.bless) emit('toast', { key: 'codex', msg: `Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal' });
+      if (shut) {}
+      else if (x.kind === 'half' && x.p.bless) emit('toast', { key: 'codex', msg: `Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal' });
       else if (x.kind === 'half') emit('toast', { key: 'codex-small', msg: `Codex: the ${P.n} page is half full.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'low' });
-      if (x.kind === 'seal') emit('toast', { key: 'codex', msg: `Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'high' });
+      if (x.kind === 'seal' && !shut) emit('toast', { key: 'codex', msg: `Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'high' });
       emit('codexPage', { id: x.id, kind: x.kind });
     }
     for (const m of out.miles) {
-      emit('toast', { key: 'codex', msg: `${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'normal' });
+      if (!shut) emit('toast', { key: 'codex', msg: `${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'normal' });
       emit('codexMilestone', { at: m.at, rewards: m.rw.map(r => r.id) });
     }
-    if (out.gain > 0) emit('codexLight', { light, gain: out.gain });
+    if (out.gain > 0 && !shut) emit('codexLight', { light, gain: out.gain });
     if (out.pages.length || out.miles.length) save();
     return out;
   }
@@ -466,6 +432,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     if (!snap) return null;
     codexRefresh(true, true);
     const s = snap; snap = null;
+    if (sideShut('codex')) return null;
     const lines = [];
     for (const id of CODEX_PAGE_IDS) {
       const P = CODEX_PAGES[id];

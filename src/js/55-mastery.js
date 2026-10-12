@@ -95,13 +95,14 @@ const masteryApi = {};
     m.types[key] = (m.types[key] || 0) + 1 + bonus('bestiaryMult');
     if (!mob.boss) m.seen[key] = { z: zone, hp: Math.round(mob.max || 0), atk: Math.round((typeof cbFoeAtk === 'function' ? cbFoeAtk(mob) : mob.atk || 0) * 10) / 10 };
     const pa = PROFILE_TIERS.filter(x => m.types[key] >= x).length;
-    if (pa > pb && pa >= 2) {
+    const shut = sideShut('bestiary');   // no-word-before-its-tab: the Bestiary's open line says what you learned
+    if (pa > pb && pa >= 2 && !shut) {
       const t = TYPES.find(x => x.key === key), nm = t ? t.name : key;
       emit('toast', { key: 'bestiary', msg: pa === 2 ? `Bestiary: you know the ${nm}'s weakness now.` : pa === 3 ? `Bestiary: you know what the ${nm} does now.` : `Bestiary: you know the ${nm} well. +5% damage to it.`, kind: 'good' });
     }
     if (!BESTIARY_PERKS[key]) return;
     const ta = tierFor(m.types[key]);
-    if (ta > tb) {
+    if (ta > tb && !shut) {
       const t = TYPES.find(x => x.key === key);
       emit('toast', { key: 'bestiary', msg: `Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, kind: 'good', prio: 'low' });   // W1-B: bell list only
     }
