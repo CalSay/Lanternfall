@@ -11,8 +11,16 @@
 # Where the time goes (local, sleeps counted by wrapping page.waitForTimeout): actor-scale 150 s of which 129 s fixed waits and
 #   7 page loads (7 s); moment layer 134 s of which 121 s fixed waits and 3 loads (3 s). Run side by side (--jobs=2) they took
 #   151 s and 136 s: two sections at once cost almost nothing extra on a 4-core machine.
-# AFTER: each CI shard runs its slice as two child shards side by side (--shard=i/6 runs --shard=2i/12 and --shard=2i+1/12),
-#   placed by WEIGHT re-measured from run 38219818796. Planned 316-325 s a child.
+# AFTER (PR run 38223450682 on e76f3662): each CI shard runs its slice as two child shards side by side (--shard=i/6 runs
+#   --shard=2i/12 and --shard=2i+1/12), placed by WEIGHT re-measured from run 38219818796. Check step / whole job, minutes
+#   shard 0: 5.8 / 6.9   shard 1: 5.9 / 6.6   shard 2: 5.4 / 6.0   shard 3: 5.5 / 6.2   shard 4: 5.1 / 5.7   shard 5: 5.4 / 6.2
+#   Child shard section sums (s): 344+320, 344+355, 315+322, 328+323, 305+297, 322+325. No retry ran, no FAIL line.
+#   Sum of section times 3898 s (+1.7% on 3833 s): two sections at once cost almost nothing on the runner.
+#   Whole CI run 8 min 9 s (was 14 min 8 s). Same 265 section names run before and after (sorted lists diffed: identical).
+# Top 15 sections after (s): actor-scale (browser) 145, online-off-clean 143, forge-line-while-fighting 143, moment layer 132,
+#   W1-D (browser) 114, basic-attack-swings 95, solo copy (browser, W1-C) 87, staged guide follow-ups (browser) 82,
+#   staged guide (browser) 82, landscape 844x390 (browser, UX-L1) 81, landscape 1920x1080 (browser, UX-L1) 75, stale-guide-tips 73,
+#   landscape 740x360 (browser, UX-L1) 73, landscape 1280x720 (browser, UX-L1) 71, champ-retry-scenes 71.
 new fresh
 wait-for "#nuChip" 10
 shot new-game-boots
