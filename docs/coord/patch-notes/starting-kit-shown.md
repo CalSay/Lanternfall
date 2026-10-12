@@ -1,0 +1,1 @@
+Your starting kit now shows in the Gear view. Before you make anything, the Weapon slot reads "Starting bow" (or sword, or staff) and the tool slots read Stone Pick, Flint Hatchet and Bone Sickle, so the gear Hesketh and the craft cards talk about is the gear you can see. Make a better one and it takes the slot. Best shot: kit-shown.
