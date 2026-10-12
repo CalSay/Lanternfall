@@ -5,7 +5,7 @@
 # (LF_CPU_THROTTLE=6); the new code (page clock stopped at its first reading, no frames, boot's away gains and tick(0) on cue on
 # a seeded Math.random, and the page clock shim no longer reads 1 ms short of its pin) passed 30 of 30 alone and 10 of 10 at 6x.
 # The shard 4 retry on PR #443 (run 38200818581) did not hang: the first attempt took 10 min 51 s and the 20-minute job limit
-# cancelled the retry 8 min 50 s in. Every check shard in that run took 10.5 to 11.8 min (0: 10.4, 1: 10.9, 2: 10.6, 3: 11.8,
+# cancelled the retry 8 min 50 s in. Every check shard in that run took 10.1 to 11.8 min (0: 10.4, 1: 10.9, 2: 10.6, 3: 11.8,
 # 4: 10.9, 5: 10.1), over half the limit, so no retry fits (carded as ci-shards-under-half).
 # This route only loads the same fixture to show it runs.
 new tier-gate
