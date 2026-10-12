@@ -13475,7 +13475,10 @@ if (section('tool-speed-adds-up')) try {
 // ==== next-tier-gate-goal: with every tier 1 piece worn and the next tier locked, Next Up names what opens it ====
 // save-tier-gate: the seed 1 walk at minute 23 (zone 13, Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4) with every tool worn.
 if (section('next tier gate')) try {
-  const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) }), E = s => g.eval(s);
+  // the clock stays a minute after the fixture's save: a later week pays its finished weekly goals on load (55-almanac), which
+  // fills the bag with Pine Log and Copper Ore and turns the gates into Ready crafts (red from Monday 12 Oct 2026)
+  const tgRaw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8'), tgAt = `Date.now = () => ${JSON.parse(tgRaw).last + 60e3};`;
+  const g = loadCore({ seed: 7, prelude: tgAt, storage: memoryStorage({ [KEY]: tgRaw }) }), E = s => g.eval(s);
   E('tick(0.1)');   // one frame, as the page runs on load: it retools the Golemfist (a legacy sword) into a bow
   const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
   const row = l => l.find(x => x.id === 'forge');
@@ -13548,7 +13551,7 @@ if (section('next tier gate')) try {
   reset();
   // 8. 8 Pine Log: the Golemfist's +1 is offered (refine-queues: "Saw 1 Pine Plank for your Golemfist +1"), and that Ready row
   // takes the forge slot over the gate row; this is why the fixture holds no Pine Log
-  const g2 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
+  const g2 = loadCore({ seed: 7, prelude: tgAt, storage: memoryStorage({ [KEY]: tgRaw }) });
   g2.eval('tick(0.1); S.mats.wood[0] = 8');
   l = g2.eval('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
   assert(l.some(x => /^Upgrade your Golemfist to \+1$|for your Golemfist \+1$/.test(x.label) && x.ready), `next tier gate: with 8 Pine Log the Golemfist upgrade is offered (${JSON.stringify(l)})`);
@@ -13558,7 +13561,7 @@ if (section('next tier gate')) try {
   l = goals();
   assert(row(l) && /^Birch Bow: \w+ \d+ of \d+/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
   // review: never a gate on a node that is never offered (hide grades 4 and 5)
-  const g3 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
+  const g3 = loadCore({ seed: 7, prelude: tgAt, storage: memoryStorage({ [KEY]: tgRaw }) });
   g3.eval('tick(0.1); S.maxZone = 60; for (const k in S.skills) S.skills[k].lv = Math.max(S.skills[k].lv, 70); S.skills.hunt.lv = 40; S.items.forEach(i => { i.t = 3; }); gearDirty()');
   l = g3.eval('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
   assert(!l.some(x => /Hunting \d+ of 64/.test(x.label)), `next tier gate: no Hunting 64 gate for a hide grade that is never offered (${JSON.stringify(row(l))})`);
