@@ -9936,6 +9936,9 @@ if (section('almanac gear days (almanac-forge-points-to-gear)')) try {
 // ---- C26 resource icons (Claude, 2026-10-01): every family and grade 1-5 has its approved icon and name ----
 if (section('resource icons (C26)')) try {
   const g = loadCore({ seed: 26 });
+  // essence-and-ingots-when-needed: Essence reads plain "Essence" until a higher grade is held; then each grade shows its approved name
+  assert(g.eval('[1, 2, 3, 4, 5].every(t => matName("ess", t) === "Essence")'), 'C26: before a second grade, Essence reads "Essence" at every grade');
+  g.eval('S.onboard.done["say:ess2"] = 1');
   const bad = JSON.parse(g.eval(`JSON.stringify(CRAFT_FAMILIES.flatMap(f => [1, 2, 3, 4, 5].flatMap(t => {
     const u = RES_ICONS.icons[f] && RES_ICONS.icons[f][t - 1], nm = RES_ICONS.names[f][t - 1], shown = matName(f, t);
     const out = [];
