@@ -5,6 +5,7 @@
 # Old-save and replay rules are in tools/check.mjs, section 'lantern caches'.
 # Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the boss's first swing until Dodge is pressed, so the route taps Dodge (tap-if) before attacking.
 # Updated 2026-10-09 (look-card-says-why): the colour line now reads "Your lantern burns Ember Red now."
+# Updated 2026-10-11 (cache-card-plain): the colour line now reads "New look: your lantern burns Ember Red."
 new boss1
 wait 2
 tap-if "Got it"
@@ -101,7 +102,7 @@ wait 1
 wait 3
 expect .mm-card
 expect "Lantern Cache"
-expect "Your lantern burns Ember Red now."
+expect "New look: your lantern burns Ember Red."
 expect "gold"
 expect "Moss Scroll"
 expect .mm-head
