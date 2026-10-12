@@ -1,0 +1,28 @@
+# seed: 1
+# Proof for card essence-and-ingots-when-needed (first-hour-jargon card D).
+# Part 1: a zone 3 save (Wren, Workbench up, only Dim Essence held). Camp's bounty reward and the Forge's materials read
+# "Essence" with no grade word.
+new forge-short
+wait 3
+tap-if "Continue"
+tap "Camp"
+wait 2
+tap-if "Got it"
+expect "Essence"
+expect-no "Dim Essence"
+shot camp-essence-plain
+# Part 2: a zone 2 save with the Forge just built and no coal yet. Two minutes at the Copper Vein bring coal and no Coal line
+# (it now waits for the first Next Up row that needs an Ingot; tools/check.mjs section essence-and-ingots-when-needed holds
+# that line's words, the kill float "+1 Essence" and the switch-off).
+new flow-upgrade
+wait 3
+tap-if "Continue"
+tap "Gather"
+wait 1
+tap-if "Dismiss this tip"
+tap "Mine at the Copper Vein"
+wait 120
+expect "Mining"
+expect-no "Coal!"
+expect-no "smelts it with ore"
+shot mining-no-coal-line

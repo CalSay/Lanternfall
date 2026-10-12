@@ -93,7 +93,7 @@
     const pay = mod('bountyPay') * (b.elite ? 2.5 : 1) * (b.x || 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
     if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
-    return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
+    return { kind, t: b.rewT, n, txt: `${n} ${matName(kind, b.rewT)}` };
   }
   const bountyText = b => (b.elite ? 'Contract: ' : '') + (BTY_TEXT[b.k] ? BTY_TEXT[b.k](b) : 'A bounty');
   // The fields each kind reads (its text, its progress test, its reward). btyShape(b) returns the first bad field of a

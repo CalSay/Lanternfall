@@ -185,7 +185,7 @@ let showAwayReport, awayLimitStep;
           const c = el('span', 'away-mat');
           c.title = matName(m.k, m.t);
           const txt = el('span', 'away-mt');
-          txt.append(num('away-mn', m.n, v => '+' + fmt(Math.floor(v))), el('span', 'away-ms', MAT[m.k].short[m.t - 1]));
+          txt.append(num('away-mn', m.n, v => '+' + fmt(Math.floor(v))), el('span', 'away-ms', matGrade(m.k, m.t) || MAT[m.k].n));
           c.append(img(matIcon(m.k, m.t)), txt);
           chips.append(c);
         }

@@ -279,6 +279,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Run `node tools/check.mjs --only="solo copy"` on any new on-screen sentence: its W1C_RE bans "other heroes", "party", "ally" and more on every screen. Why: "These are for other heroes." on the Forge failed shard 2 of #433. (craft-costs-up-front, 2026-10-11)
 
 - The guide panel takes no taps (`.ob-bub` has `pointer-events: none`; only its Got it, Go and × buttons do), so a tip can only take a fight tap when it hides the bar (`.guide-bar-off`) or its button sits over one. To test a tap-through, make the tip too tall to fit above the bar, not its words lie over a button. Why: stale-guide-tips' first check laid the words over Attack and the tap reached Attack on the old build too. (stale-guide-tips, 2026-10-11)
+- A one-time line tied to a Next Up row fires only when that goal returns a row, never from code that runs before its early `return null` exits: every goal's pct and label run on each scoring pass, shown or not. Why: the first Ingot line fired from a refine goal that then returned nothing, spending its once-a-save mark. (essence-and-ingots-when-needed, 2026-10-12)
 
 ## Saves and offline parity
 

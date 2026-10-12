@@ -106,7 +106,7 @@ const REFINE_MID = { ore: 'ingot', wood: 'plank', fibre: 'cloth', hide: 'leather
 //   secs     seconds per unit by grade at a Lv 1 station;  perLevel  +10% speed a station level above 1
 //   xp       station XP a unit = xp x grade;  coal  coal per Ingot by grade;  coalDrop  coal per Copper Ore mined (Forge built)
 //   reserve  an "All" order keeps this share of each input, counted when it is set;  max  orders a station holds
-const REFINE_TUNE = { on: true, reserve: 0.2, secs: [15, 25, 40, 60, 90], perLevel: 0.1, xp: 2, coal: [1, 2, 3, 4, 4], coalDrop: 0.5, max: 3 };
+const REFINE_TUNE = { on: true, reserve: 0.2, secs: [15, 25, 40, 60, 90], perLevel: 0.1, xp: 2, coal: [1, 2, 3, 4, 4], coalDrop: 0.5, max: 3, coalAtSmelt: true };   // coalAtSmelt: essence-and-ingots-when-needed
 // Products: station, skill, the verbs a station row uses, and the inputs of one unit at grade t ([family, grade, n]).
 const REFINE_PRODUCTS = {
   ingot: { st: 'forge', skill: 'smith', verb: 'Smelt', ing: 'Smelting', did: 'smelted', inputs: t => [['ore', t, 2], ['coal', 1, REFINE_TUNE.coal[t - 1]]] },
