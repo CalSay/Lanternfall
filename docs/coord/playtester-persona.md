@@ -67,6 +67,32 @@ Scoring: a separate judge (Sonnet) compares the notes with a human's notes, if a
 match ("caught" = same problem, same complaint; "partly" = same thing, different complaint). It also triages the
 tester's new issues as real, false alarm, unsure or tool.
 
+## Regression checks (escapes the tester missed)
+
+Escapes the tester did not see ("Bot saw: no" in `autopilot/escapes.md`), added by the coordinator at each Monday retro.
+They come from human notes and incidents, so under the holdout rule they never go into `BRIEF` or the blind runs above,
+and a run that used them is never scored for held-out catch. They are a separate **checks run**: after the blind runs, one
+more worker plays the same build (seed 4, desk view, in legs to zone 10 like the 8 Oct run, `--resume` between legs) with
+this list pasted into its own worker prompt, and with this week's patch notes (`docs/coord/patch-notes/`) for check 13. It
+notes each check as pass, fail (with the on-screen text) or not reached. Its notes go to the judge as a pass/fail table,
+not as catches.
+
+Added 2026-10-12 (Monday retro):
+
+| Escape row | Check |
+|---|---|
+| 13 | Read this week's patch notes, then find each thing they say is in. Note any you cannot find, by name. |
+| 29 | Open each gathering skill. Does it show how much you get per minute and per hour? |
+| 32 | Look at every hero's ability bar and picker. Note any button showing two letters instead of a picture. Say whether a unique item has dropped yet. |
+| 38 | If you reach level 4 before the Parry lesson, do Hesketh's boss scroll and the "spend your points" prompt both appear and close properly? |
+| 39 | On bosses from zone 4 to 15, does the boss rally at its health marks, even when you beat an ordinary foe just before? |
+| 40 | On a phone held upright (`--view portrait`), do the hero and the foe stay fully on the fight stage when Hesketh's first tip appears? On a sideways phone (`--view landscape`), does every button work on the first press? |
+| 41 | In zones 1 to 3, does each boss feel a step harder and pay more than the last? Does defending ever matter? |
+| 42 | Press Parry and Dodge a little early on purpose. Does the game tell you that you were early, or that you missed? |
+| 43 | Compare the fight screen numbers (HP, DPS, hit numbers) with the hits you see land. Note any that do not match. |
+
+Check 40 needs two short phone legs (seed 4 again, 60 steps each), since the checks run plays at a desk.
+
 ## Retune against Cal's notes of 2026-10-07
 
 Before (persona v1, measured on the #177 build, 2 seeds of 150 steps, Pip): **7 of 18 caught, 9 partly, 2 missed**
