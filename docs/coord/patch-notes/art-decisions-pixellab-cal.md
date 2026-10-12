@@ -1,0 +1,1 @@
+Docs only: docs/DECISIONS.md records Cal's 11 Oct PixelLab changes (Pip as tall as the others, Tobin's look is the standard, Cal approves each step), the Tavern Blackjack multi-seed ruling, the fight-words ruling, the Sunday merge freeze, and three retro trials under Replaced decisions. No player change. (no shot)

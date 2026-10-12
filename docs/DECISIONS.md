@@ -412,6 +412,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   0.12 price-hours (16-310 gold at zone 14), cut from 0.2 because the gold-loss bound BJ-a missed on 2 of 3 seeds at 0.2. BJ-b and
   BJ-c single-seed misses flip direction and are recorded as noise until blackjack-odds-multiseed measures them. Evidence
   `docs/proof/tavern-blackjack-build/evidence.md`.
+- **Tavern Blackjack multi-seed (judge 2026-10-11, #429; Cal can veto with "Treat the active zone drop as real and cut the
+  table's top bet below 0.12" or "Keep BJ-b and BJ-c as one-seed checks"):** the 0.12 price-hour top bet stands. The active
+  lean did not hold on 32 fresh seeds (+0.09 ± 0.80, 8 down, 8 up), and the table takes about 0.8% of active income. It reopens
+  if the paired hour each run first reaches zone 28 or 35 shows a steady delay more than 2 s.e. from zero. A later tooling card
+  reads BJ-b and BJ-c as the mean paired change over 12 or more seeds with its s.e.: FAIL when the mean is outside the bound and
+  more than 2 s.e. from zero, PASS when it is inside the bound, otherwise NOISY (info, never a pass). It is an on-demand
+  `--report`, not a `check.mjs` gate. Evidence `docs/proof/blackjack-odds-multiseed/evidence.md`.
 
 ## Achievements
 
@@ -1153,6 +1160,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   and Gather even with the fight beside the menu, and never pauses it. A fighter who has not seen a materials step's line hears it
   once, held in the gap after a kill, with its Go (a say: mark, no save field, at most one a minute, never for gold or essence alone).
   It still never shows over Hero, Craft or other menus.
+- **Fight words are told by tap and by first landing (first-hour-jargon, Opus high judge 2026-10-11; Cal can veto with "Tap
+  only, no fight lines" or "Hold the release, not the display").** Every status chip and resource meter answers a tap or hover
+  with its line, built from the move that landed. The first landing of a status in a save shows that line once in the hero's
+  turn, at most one a fight, and it clears on the next press. A released tab shows once no foe is on the stage. The release
+  clock and every check bound stay; rows opened by the player or a drop show at once. Plan: `docs/design/first-hour-jargon.md`.
 
 ## Story
 
@@ -1405,6 +1417,12 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   stays live (route-s-tobin-wire included) until the cast passes; about 300 generations per hero at most. Tobin's re-brief stands.
   Cal 13:02: PixelLab designs each pose on the sheet, but Wren's bowstring and arrows are removed from its frames and drawn by the
   game's code as before. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
+- **PixelLab cast, Cal's changes (Cal, 2026-10-11, art sourcing thread; these replace the matching conditions above):** Pip
+  stands the same height as Wren and Tobin, not 0.9 of Wren (13:56, cmsg_01AYPNgUeMrmxpJNQMppEbk9DmALRTkXWTsQZ4AVwEgzL3). Tobin's
+  PixelLab look is the standard for every hero: Wren and Pip are redesigned toward big flat shapes like Tobin's, with their
+  references made the same way Tobin's was (13:53, cmsg_01AYPNgUeMrmxpJNQMppEbk9Whd8rpdgZNSJscZ3CZPVKq; 13:56 as above). Cal
+  reviews and approves each PixelLab step himself before the next one starts (13:49,
+  cmsg_01AYPNgUeMrmxpJNQMppEbk9YEeVFUsZ5bamdzMRyMFdZj), so the cast is signed off by Cal, not by the judge.
 - **ability-effects-live (#333, Opus art judge, 2026-10-10): wire after fixes.** The effects match the Barbed Arrow test for
   grandeur and break no art-freeze rule; full-stage white flashes came down so the lanterns carry the night, and each status shows
   its own colour. (Fixes listed in PR #333.)
@@ -1560,10 +1578,28 @@ nothing; no economy or save change. A cache with a pick is a big card.
   Record: `docs/design/hosting/art-loader-judge.md`.
 - **Loading screen (judge 2026-10-10, docs/design/hosting/loading-screen-judge.md; Cal can veto: "make the screen wait for the hero's moves"):** the split build opens on a title screen with no art (the name, a bar, the line) and waits for no hero moves; card hero-queue first reorders and preloads the hero's first-hour moves and measures holds, and a fight-set wait comes only if holds remain, inside the boot set under E2 (at most 0.45 MB, real boot bytes at most 4.60 MB). The 6.0 s and 4.0 MB lines stand. cold-load.mjs times the font stylesheets. netlify-split-deploy owns long-lived caching on /assets/*.
 - **Engine boot bytes (judge 2026-10-10, ns-scenery-engine #351; Cal can veto: "trim the engine under the warn line"):** the new-style engine's ~7.5 KB on the wire puts the new-game boot set at 3.5007 MB, over the 3.5 warn line, and is accepted as named in the PR: plan.md 5.1 already expects about 3.8 MB with A1, a camp cut would only move the bytes to the camp wire card, and hero cores count once (the heaviest), not stacked. The 3.5 warn and 4.0 fail lines stand; the cold load stays within 6.0 s (4.5 s measured on the PR head).
+- **2026-10-12 Claude decided (retro): the Sunday 18:00 to Monday 00:05 merge freeze holds for src/ and dist/; only a P0
+  merges in it.** Why: #429 to #436 merged after the 11 Oct GO and the Monday deploy was skipped.
 
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- CI retry: "A failed check shard or eyes run re-runs once inside the job; a pass on retry counts as green, with a FLAKE
+  warning" (retry-once wrapper #165, #272; escape 40, 2026-10-09) -> trial to Mon 19 Oct: no in-job retry; every
+  first-attempt red is red and gets a card or a named root cause within 24 h. CI YAML is Cal's, so the trial clock starts
+  when Cal's change lands (card ci-retry-off); until then a retry-pass FLAKE warning gets a card within 24 h. Why: both
+  second-try greens this week hid real bugs (4d7d0461, fixed by #418; 2e3d6016, fixed by #428), and the retry hit the
+  20-minute job limit four times (judge, retro 2026-10-12, trial 1).
+- Slot roles: "1-3 early-game cards in the lead's order; 4 system cards; 5 is the polish slot" (playbook, Pace) -> trial to
+  Mon 19 Oct: starts follow `plan.mjs next`; the 3-day rule guards against starvation; a P0 of any size takes the next free
+  slot. Why: at pace 4 slot 5 never existed, no tick used the list, and fight-numbers-honest starved while it was in force
+  (judge, retro 2026-10-12, trial 2).
+- Predictions: "every card carries a Prediction line", which the Foreman added at START -> trial to Mon 19 Oct: a tooling or
+  CI-fix card writes `Prediction: none (tooling)` unless it names a suspected cause or a number CI or the walk re-reads; a
+  line, file or size count never counts as a prediction (size lives in `Size:`); `plan.mjs check` skips the Prediction and
+  Check warning for cards whose Goal starts with "Enables". Why: size guesses were scored as misses on player fixes, and 316
+  warnings buried the two that matter (judge, retro 2026-10-12, trial 3).
 
 - Money: "Never sell anything random", and "nothing bought is random" (Lantern Rule 2, 2026-10-06) -> paid loot crates
   of looks, with contents, odds and pity shown (Cal, 2026-10-10, thread "Loot crates").
